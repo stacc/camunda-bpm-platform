@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.stacc.TestEntity">
+    <insert id="insertTest" parameterType="org.stacc.TestEntity">
+        insert into TEST_ENTITY (id, is_foo, bar, revision)
+        values (
+        #{id ,jdbcType=VARCHAR},
+        #{isFoo ,jdbcType=BOOLEAN},
+        #{bar ,jdbcType=INTEGER},
+        1
+        )
+    </insert>
+    <update id="updateTest" parameterType="org.stacc.TestEntity">
+        update TEST_ENTITY set
+        revision = #{revisionNext ,jdbcType=INTEGER},
+        is_foo = #{isFoo ,jdbcType=BOOLEAN},
+        bar = #{bar ,jdbcType=INTEGER},
+        where id = #{id}
+        and revision = #{revision}
+    </update>
+</mapper>
