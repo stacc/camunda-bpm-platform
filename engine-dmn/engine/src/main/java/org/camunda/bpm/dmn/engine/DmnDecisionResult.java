@@ -19,6 +19,7 @@ package org.camunda.bpm.dmn.engine;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.camunda.bpm.engine.variable.value.TypedValue;
 
@@ -111,4 +112,7 @@ public interface DmnDecisionResult extends List<DmnDecisionResultEntries>, Seria
    */
   <T extends TypedValue> T getSingleEntryTyped();
 
+  UUID getEvaluationId();
+
+  void setEvaluationId(UUID evaluationId);
 }

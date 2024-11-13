@@ -16,12 +16,7 @@
  */
 package org.camunda.bpm.dmn.engine.impl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.camunda.bpm.dmn.engine.DmnDecision;
 import org.camunda.bpm.dmn.engine.DmnDecisionLogic;
@@ -73,6 +68,7 @@ public class DefaultDmnDecisionContext {
       throw LOG.unableToFindAnyDecisionTable();
     }
     VariableMap variableMap = buildVariableMapFromVariableContext(variableContext);
+    UUID evaluationId = UUID.randomUUID();
 
     List<DmnDecision> requiredDecisions = new ArrayList<DmnDecision>();
     buildDecisionTree(decision, requiredDecisions);
@@ -86,12 +82,14 @@ public class DefaultDmnDecisionContext {
       evaluatedEvents.add(evaluatedEvent);
 
       evaluatedResult = handler.generateDecisionResult(evaluatedEvent);
+      evaluatedResult.setEvaluationId(evaluationId);
+
       if(decision != evaluateDecision) {
         addResultToVariableContext(evaluatedResult, variableMap, evaluateDecision);
       }
     }
 
-    generateDecisionEvaluationEvent(evaluatedEvents);
+    generateDecisionEvaluationEvent(evaluatedEvents, evaluationId);
     return evaluatedResult;
   }
 
@@ -162,7 +160,7 @@ public class DefaultDmnDecisionContext {
     return isDecisionTableWithCollectHitPolicy;
   }
 
-  protected void generateDecisionEvaluationEvent(List<DmnDecisionLogicEvaluationEvent> evaluatedEvents) {
+  protected void generateDecisionEvaluationEvent(List<DmnDecisionLogicEvaluationEvent> evaluatedEvents, UUID evaluationId) {
 
     DmnDecisionLogicEvaluationEvent rootEvaluatedEvent = null;
     DmnDecisionEvaluationEventImpl decisionEvaluationEvent = new DmnDecisionEvaluationEventImpl();
@@ -173,6 +171,7 @@ public class DefaultDmnDecisionContext {
       rootEvaluatedEvent = evaluatedEvent;
     }
 
+    decisionEvaluationEvent.setEvaluationId(evaluationId);
     decisionEvaluationEvent.setDecisionResult(rootEvaluatedEvent);
     decisionEvaluationEvent.setExecutedDecisionInstances(evaluatedEvents.size());
     decisionEvaluationEvent.setExecutedDecisionElements(executedDecisionElements);

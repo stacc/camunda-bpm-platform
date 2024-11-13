@@ -17,6 +17,7 @@
 package org.camunda.bpm.dmn.engine.delegate;
 
 import java.util.Collection;
+import java.util.UUID;
 
 /**
  * Event which represents the evaluation of a decision
@@ -42,4 +43,6 @@ public interface DmnDecisionEvaluationEvent {
    * @return the number of executed decision elements during the evaluation
    */
   long getExecutedDecisionElements();
+
+  UUID getEvaluationId();
 }

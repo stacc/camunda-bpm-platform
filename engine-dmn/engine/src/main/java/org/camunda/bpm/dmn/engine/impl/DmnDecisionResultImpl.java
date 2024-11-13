@@ -16,13 +16,7 @@
  */
 package org.camunda.bpm.dmn.engine.impl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 
 import org.camunda.bpm.dmn.engine.DmnDecisionResultEntries;
 import org.camunda.bpm.dmn.engine.DmnDecisionResult;
@@ -35,6 +29,8 @@ public class DmnDecisionResultImpl implements DmnDecisionResult {
   public static final DmnEngineLogger LOG = DmnLogger.ENGINE_LOGGER;
 
   protected final List<DmnDecisionResultEntries> ruleResults;
+
+  protected UUID evaluationId;
 
   public DmnDecisionResultImpl(List<DmnDecisionResultEntries> ruleResults) {
     this.ruleResults = ruleResults;
@@ -102,6 +98,16 @@ public class DmnDecisionResultImpl implements DmnDecisionResult {
     } else {
       return null;
     }
+  }
+
+  @Override
+  public UUID getEvaluationId() {
+    return evaluationId;
+  }
+
+  @Override
+  public void setEvaluationId(UUID evaluationId) {
+    this.evaluationId = evaluationId;
   }
 
   @Override

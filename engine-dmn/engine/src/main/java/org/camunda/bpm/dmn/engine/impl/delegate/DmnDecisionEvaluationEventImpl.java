@@ -18,6 +18,7 @@ package org.camunda.bpm.dmn.engine.impl.delegate;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.UUID;
 
 import org.camunda.bpm.dmn.engine.DmnDecision;
 import org.camunda.bpm.dmn.engine.delegate.DmnDecisionEvaluationEvent;
@@ -29,6 +30,8 @@ public class DmnDecisionEvaluationEventImpl implements DmnDecisionEvaluationEven
   protected Collection<DmnDecisionLogicEvaluationEvent> requiredDecisionResults = new ArrayList<DmnDecisionLogicEvaluationEvent>();
   protected long executedDecisionInstances;
   protected long executedDecisionElements;
+
+  protected UUID evaluationId;
 
   @Override
   public DmnDecisionLogicEvaluationEvent getDecisionResult() {
@@ -64,6 +67,15 @@ public class DmnDecisionEvaluationEventImpl implements DmnDecisionEvaluationEven
 
   public void setExecutedDecisionElements(long executedDecisionElements) {
     this.executedDecisionElements = executedDecisionElements;
+  }
+
+  @Override
+  public UUID getEvaluationId() {
+    return evaluationId;
+  }
+
+  public void setEvaluationId(UUID evaluationId) {
+    this.evaluationId = evaluationId;
   }
 
   @Override
