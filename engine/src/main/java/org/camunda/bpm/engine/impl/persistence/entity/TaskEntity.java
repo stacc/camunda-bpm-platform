@@ -1768,7 +1768,8 @@ public class TaskEntity extends AbstractVariableScope implements Task, DelegateT
       activityExecution.setVariables(variables);
     }
 
-    TypedValue escalationData = activityExecution.getVariableTyped(EscalationHandler.ESCALATION_DATA_VARIABLE);
+    TypedValue escalationData = activityExecution.getVariableLocalTyped(EscalationHandler.ESCALATION_DATA_VARIABLE);
+
     EscalationHandler.propagateEscalation(activityExecution, escalationCode, escalationData);
   }
 

@@ -45,7 +45,7 @@ public class ThrowEscalationEventActivityBehavior extends AbstractBpmnActivityBe
     // A "magic" variable that is set by an execution listener, and then follows the event as it
     // propagates up the hierarchy. This is used to pass data from the throwing event to the catching
     // event.
-    TypedValue escalationData = execution.getVariableTyped(EscalationHandler.ESCALATION_DATA_VARIABLE);
+    TypedValue escalationData = execution.getVariableLocalTyped(EscalationHandler.ESCALATION_DATA_VARIABLE);
 
     EscalationEventDefinition escalationEventDefinition = EscalationHandler.executeEscalation(execution, escalation.getEscalationCode(), escalationData);
 

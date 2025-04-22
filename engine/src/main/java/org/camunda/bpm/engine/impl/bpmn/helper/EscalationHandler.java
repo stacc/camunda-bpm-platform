@@ -16,12 +16,15 @@
  */
 package org.camunda.bpm.engine.impl.bpmn.helper;
 
+import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.impl.ProcessEngineLogger;
+import org.camunda.bpm.engine.impl.bpmn.behavior.BoundaryEventActivityBehavior;
 import org.camunda.bpm.engine.impl.bpmn.behavior.BpmnBehaviorLogger;
 import org.camunda.bpm.engine.impl.bpmn.parser.EscalationEventDefinition;
 import org.camunda.bpm.engine.impl.pvm.PvmActivity;
 import org.camunda.bpm.engine.impl.pvm.PvmScope;
 import org.camunda.bpm.engine.impl.pvm.delegate.ActivityExecution;
+import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
 import org.camunda.bpm.engine.impl.tree.ActivityExecutionHierarchyWalker;
 import org.camunda.bpm.engine.impl.tree.ActivityExecutionMappingCollector;
 import org.camunda.bpm.engine.impl.tree.ActivityExecutionTuple;
@@ -88,9 +91,33 @@ public class EscalationHandler {
       escalationExecution.setVariable(escalationEventDefinition.getEscalationCodeVariable(), escalationCode);
     }
 
+    // Activity ID used as postfix for the escalation data variable
+    // Event subprocesses require special handling to ensure the correct activity ID is used
+    var activityId = escalationHandler.getId();
+    var initialActivity = escalationHandler.getProperty("initial");
+    if (initialActivity != null) {
+      activityId = ((ActivityImpl) initialActivity).getActivityId();
+    }
+
     // Extract the data embedded in the escalation event and set it as a variable
     // to make it available in the surrounding execution for an execution listener.
-    escalationExecution.setVariableLocal(ESCALATION_DATA_VARIABLE, escalationData);
+    //
+    // For interrupting boundary events, we need special handling to ensure the data is not lost
+    if (escalationEventDefinition.isCancelActivity() &&
+        escalationHandler.getActivityBehavior() instanceof BoundaryEventActivityBehavior) {
+
+      // Find an execution that won't be destroyed during interruption
+      PvmScope flowScope = escalationHandler.getFlowScope();
+      ActivityExecution flowScopeExecution = activityExecutionMappingCollector.getExecutionForScope(flowScope);
+      if (flowScopeExecution == null) {
+        throw new ProcessEngineException("No flow scope execution found for boundary event " + escalationHandler.getId()
+            + ". Cannot properly propagate escalation data for interrupting boundary event.");
+      }
+
+      flowScopeExecution.setVariableLocal(ESCALATION_DATA_VARIABLE + "_" + activityId, escalationData);
+    } else {
+      escalationExecution.setVariableLocal(ESCALATION_DATA_VARIABLE + "_" + activityId, escalationData);
+    }
 
     escalationExecution.executeActivity(escalationHandler);
   }
