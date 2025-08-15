@@ -32,6 +32,8 @@ import org.camunda.bpm.engine.impl.tree.OutputVariablesPropagator;
 import org.camunda.bpm.engine.impl.tree.ReferenceWalker;
 import org.camunda.bpm.engine.variable.value.TypedValue;
 
+import java.util.ArrayList;
+
 /**
  * Helper class handling the propagation of escalation.
  */
@@ -99,6 +101,9 @@ public class EscalationHandler {
       activityId = ((ActivityImpl) initialActivity).getActivityId();
     }
 
+    Object escalationDataValue = escalationData.getValue();
+    String escalationDataString = (String) (escalationDataValue != null ? escalationDataValue : "");
+
     // Extract the data embedded in the escalation event and set it as a variable
     // to make it available in the surrounding execution for an execution listener.
     //
@@ -114,9 +119,28 @@ public class EscalationHandler {
             + ". Cannot properly propagate escalation data for interrupting boundary event.");
       }
 
-      flowScopeExecution.setVariableLocal(ESCALATION_DATA_VARIABLE + "_" + activityId, escalationData);
+      TypedValue value = flowScopeExecution.getVariableLocalTyped(ESCALATION_DATA_VARIABLE + "_" + activityId);
+      ArrayList<String> escalationDataList = null;
+      if (value == null) {
+        escalationDataList = new ArrayList<>();
+      } else {
+        escalationDataList = (ArrayList<String>) value.getValue();
+      }
+
+      escalationDataList.add(escalationDataString);
+      flowScopeExecution.setVariableLocal(ESCALATION_DATA_VARIABLE + "_" + activityId, escalationDataList);
     } else {
-      escalationExecution.setVariableLocal(ESCALATION_DATA_VARIABLE + "_" + activityId, escalationData);
+      TypedValue value = escalationExecution.getVariableLocalTyped(ESCALATION_DATA_VARIABLE + "_" + activityId);
+      ArrayList<String> escalationDataList = null;
+      if (value == null) {
+        escalationDataList = new ArrayList<>();
+      } else {
+        escalationDataList = (ArrayList<String>) value.getValue();
+      }
+
+
+      escalationDataList.add(escalationDataString);
+      escalationExecution.setVariableLocal(ESCALATION_DATA_VARIABLE + "_" + activityId, escalationDataList);
     }
 
     escalationExecution.executeActivity(escalationHandler);
