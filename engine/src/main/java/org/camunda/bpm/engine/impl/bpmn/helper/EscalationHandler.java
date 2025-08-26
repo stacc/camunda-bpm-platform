@@ -142,8 +142,17 @@ public class EscalationHandler {
     if (value == null) {
       escalationDataList = new ArrayDeque<>();
     } else {
-      //noinspection unchecked
-      escalationDataList = (ArrayDeque<String>) value.getValue();
+      var v = value.getValue();
+      if (v instanceof String) {
+        // Support for single value (as in previous version)
+        escalationDataList = new ArrayDeque<>();
+        escalationDataList.add((String) v);
+      } else if (v instanceof ArrayDeque) {
+        //noinspection unchecked
+        escalationDataList = (ArrayDeque<String>) v;
+      } else {
+        throw new ProcessEngineException("Unexpected type of escalation data variable: " + v.getClass().getName());
+      }
     }
 
     escalationDataList.add(escalationDataString);
