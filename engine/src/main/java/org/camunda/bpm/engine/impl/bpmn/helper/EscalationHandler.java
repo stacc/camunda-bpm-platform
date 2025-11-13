@@ -32,6 +32,8 @@ import org.camunda.bpm.engine.impl.tree.OutputVariablesPropagator;
 import org.camunda.bpm.engine.impl.tree.ReferenceWalker;
 import org.camunda.bpm.engine.variable.value.TypedValue;
 
+import java.util.ArrayDeque;
+
 /**
  * Helper class handling the propagation of escalation.
  */
@@ -99,6 +101,9 @@ public class EscalationHandler {
       activityId = ((ActivityImpl) initialActivity).getActivityId();
     }
 
+    Object escalationDataValue = escalationData.getValue();
+    String escalationDataString = (String) (escalationDataValue != null ? escalationDataValue : "");
+
     // Extract the data embedded in the escalation event and set it as a variable
     // to make it available in the surrounding execution for an execution listener.
     //
@@ -114,9 +119,9 @@ public class EscalationHandler {
             + ". Cannot properly propagate escalation data for interrupting boundary event.");
       }
 
-      flowScopeExecution.setVariableLocal(ESCALATION_DATA_VARIABLE + "_" + activityId, escalationData);
+      updateEscalationDataVariable(flowScopeExecution, activityId, escalationDataString);
     } else {
-      escalationExecution.setVariableLocal(ESCALATION_DATA_VARIABLE + "_" + activityId, escalationData);
+      updateEscalationDataVariable(escalationExecution, activityId, escalationDataString);
     }
 
     escalationExecution.executeActivity(escalationHandler);
@@ -131,4 +136,26 @@ public class EscalationHandler {
     }
   }
 
+  private static void updateEscalationDataVariable(ActivityExecution execution, String activityId, String escalationDataString) {
+    TypedValue value = execution.getVariableLocalTyped(ESCALATION_DATA_VARIABLE + "_" + activityId);
+    ArrayDeque<String> escalationDataList;
+    if (value == null) {
+      escalationDataList = new ArrayDeque<>();
+    } else {
+      var v = value.getValue();
+      if (v instanceof String) {
+        // Support for single value (as in previous version)
+        escalationDataList = new ArrayDeque<>();
+        escalationDataList.add((String) v);
+      } else if (v instanceof ArrayDeque) {
+        //noinspection unchecked
+        escalationDataList = (ArrayDeque<String>) v;
+      } else {
+        throw new ProcessEngineException("Unexpected type of escalation data variable: " + v.getClass().getName());
+      }
+    }
+
+    escalationDataList.add(escalationDataString);
+    execution.setVariableLocal(ESCALATION_DATA_VARIABLE + "_" + activityId, escalationDataList);
+  }
 }
