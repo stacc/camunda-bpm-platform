@@ -68,6 +68,45 @@
                      "description": "Logical query: assignee = \\"John Munda\\" AND (name = \\"Approve Invoice\\" OR priority = 5) AND (suspended = false OR taskDefinitionKey = \\"approveInvoice\\")",
                      "value": {
                        "assignee": "John Munda",
+                       "withCommentAttachmentInfo": "true",
+                       "orQueries": [
+                         {
+                           "name": "Approve Invoice",
+                           "priority": 5
+                         },
+                         {
+                           "suspended": false,
+                           "taskDefinitionKey": "approveInvoice"
+                         }
+                       ]
+                     }
+                   }',
+      '"example-3": {
+                     "summary": "POST `/task` Request Body 3",
+                     "description": "Logical query: assignee = \\"John Munda\\" AND (name = \\"Approve Invoice\\" OR priority = 5) AND (suspended = false OR taskDefinitionKey = \\"approveInvoice\\")",
+                     "value": {
+                       "assignee": "John Munda",
+                       "withCommentAttachmentInfo": "true",
+                       "withTaskVariablesInReturn": "true",
+                       "orQueries": [
+                         {
+                           "name": "Approve Invoice",
+                           "priority": 5
+                         },
+                         {
+                           "suspended": false,
+                           "taskDefinitionKey": "approveInvoice"
+                         }
+                       ]
+                     }
+                   }',
+      '"example-4": {
+                     "summary": "POST `/task` Request Body 4",
+                     "description": "Logical query: assignee = \\"John Munda\\" AND (name = \\"Approve Invoice\\" OR priority = 5) AND (suspended = false OR taskDefinitionKey = \\"approveInvoice\\")",
+                     "value": {
+                       "assignee": "John Munda",
+                       "withCommentAttachmentInfo": "true",
+                       "withTaskLocalVariablesInReturn": "true",
                        "orQueries": [
                          {
                            "name": "Approve Invoice",
@@ -86,7 +125,7 @@
 
     <@lib.response
         code = "200"
-        dto = "TaskDto"
+        dto = "TaskWithAttachmentAndCommentDto"
         array = true
         desc = "Request successful."
         examples = ['"example-1": {
@@ -119,7 +158,8 @@
                              "binding": "version",
                              "version": 2
                            },
-                           "tenantId":"aTenantId"
+                           "tenantId":"aTenantId",
+                           "taskState": "aTaskState"
                          }
                        ]
                     }',
@@ -148,7 +188,93 @@
                            "caseDefinitionId": null,
                            "suspended": false,
                            "formKey": "embedded:app:develop/invoice-forms/approve-invoice.html",
-                           "tenantId": null
+                           "tenantId": null,
+                           "taskState": "aTaskState",
+                           "attachment":false,
+                           "comment":false
+                         }
+                       ]
+                     }',
+        '"example-3": {
+                       "summary": "Status 200 response 3",
+                       "value": [
+                         {
+                           "id": "349fffa8-6571-11e7-9a44-d6940f5ef88d",
+                           "name": "Approve Invoice",
+                           "assignee": "John Munda",
+                           "created": "2017-07-10T15:10:54.670+0200",
+                           "due": "2017-07-17T15:10:54.670+0200",
+                           "followUp": null,
+                           "lastUpdated": "2017-07-17T15:10:54.670+0200",
+                           "delegationState": null,
+                           "description": "Approve the invoice (or not).",
+                           "executionId": "349f8a5c-6571-11e7-9a44-d6940f5ef88d",
+                           "owner": null,
+                           "parentTaskId": null,
+                           "priority": 50,
+                           "processDefinitionId": "invoice:1:2c8d8057-6571-11e7-9a44-d6940f5ef88d",
+                           "processInstanceId": "349f8a5c-6571-11e7-9a44-d6940f5ef88d",
+                           "taskDefinitionKey": "approveInvoice",
+                           "caseExecutionId": null,
+                           "caseInstanceId": null,
+                           "caseDefinitionId": null,
+                           "suspended": false,
+                           "formKey": "embedded:app:develop/invoice-forms/approve-invoice.html",
+                           "tenantId": null,
+                           "taskState": "aTaskState",
+                           "variables": {
+                             "aVariableKey": {
+                               "type": "String",
+                               "value": "aVariableValue",
+                               "valueInfo": {}
+                             },
+                             "anotherVariableKey": {
+                               "type": "String",
+                               "value": "anotherVariableValue",
+                               "valueInfo": {}
+                             }
+			                     },
+                           "attachment":false,
+                           "comment":false
+                         }
+                       ]
+                     }',
+        '"example-4": {
+                       "summary": "Status 200 response 4",
+                       "value": [
+                         {
+                           "id": "349fffa8-6571-11e7-9a44-d6940f5ef88d",
+                           "name": "Approve Invoice",
+                           "assignee": "John Munda",
+                           "created": "2017-07-10T15:10:54.670+0200",
+                           "due": "2017-07-17T15:10:54.670+0200",
+                           "followUp": null,
+                           "lastUpdated": "2017-07-17T15:10:54.670+0200",
+                           "delegationState": null,
+                           "description": "Approve the invoice (or not).",
+                           "executionId": "349f8a5c-6571-11e7-9a44-d6940f5ef88d",
+                           "owner": null,
+                           "parentTaskId": null,
+                           "priority": 50,
+                           "processDefinitionId": "invoice:1:2c8d8057-6571-11e7-9a44-d6940f5ef88d",
+                           "processInstanceId": "349f8a5c-6571-11e7-9a44-d6940f5ef88d",
+                           "taskDefinitionKey": "approveInvoice",
+                           "caseExecutionId": null,
+                           "caseInstanceId": null,
+                           "caseDefinitionId": null,
+                           "suspended": false,
+                           "formKey": "embedded:app:develop/invoice-forms/approve-invoice.html",
+                           "tenantId": null,
+                           "taskState": "aTaskState",
+                           "variables": {
+                             "anotherVariableKey": {
+                               "type": "String",
+                               "value": "anotherVariableValue",
+                               "valueInfo": {}
+                             }
+			                     },
+                           "attachment":false,
+                           "comment":false
                          }
                        ]
                      }'

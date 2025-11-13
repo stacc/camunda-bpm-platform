@@ -164,6 +164,7 @@ public class JobRestServiceQueryTest extends AbstractRestServiceTest {
     String returnedJobDefinitionId= from(content).getString("[0].jobDefinitionId");
     String returnedTenantId = from(content).getString("[0].tenantId");
     String returnedCreateTime = from(content).getString("[0].createTime");
+    String returnedBatchId = from(content).getString("[0].batchId");
 
     Assert.assertEquals(MockProvider.EXAMPLE_JOB_ID, returnedJobId);
     Assert.assertEquals(MockProvider.EXAMPLE_PROCESS_INSTANCE_ID, returnedProcessInstanceId);
@@ -179,6 +180,7 @@ public class JobRestServiceQueryTest extends AbstractRestServiceTest {
     Assert.assertEquals(MockProvider.EXAMPLE_JOB_DEFINITION_ID, returnedJobDefinitionId);
     Assert.assertEquals(MockProvider.EXAMPLE_TENANT_ID, returnedTenantId);
     Assert.assertEquals(MockProvider.EXAMPLE_JOB_CREATE_TIME, returnedCreateTime);
+    Assert.assertEquals(MockProvider.EXAMPLE_BATCH_ID, returnedBatchId);
   }
 
   private interface DateParameters {
@@ -358,6 +360,38 @@ public class JobRestServiceQueryTest extends AbstractRestServiceTest {
   }
 
   @Test
+  public void testAcquiredParameter() {
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put("acquired", MockProvider.EXAMPLE_ACQUIRED);
+
+    given()
+        .queryParams(parameters)
+        .then()
+        .expect()
+        .statusCode(Status.OK.getStatusCode())
+        .when()
+        .get(JOBS_RESOURCE_URL);
+
+    verify(mockQuery).acquired();
+    verify(mockQuery).list();
+  }
+
+  @Test
+  public void testAcquiredParameterAsPost() {
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put("acquired", MockProvider.EXAMPLE_ACQUIRED);
+
+    given()
+        .contentType(POST_JSON_CONTENT_TYPE)
+        .body(parameters)
+        .then()
+        .expect()
+        .statusCode(Status.OK.getStatusCode())
+        .when()
+        .post(JOBS_RESOURCE_URL);
+  }
+
+  @Test
   public void testMessagesTimersParameter() {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("messages", MockProvider.EXAMPLE_MESSAGES);
@@ -419,6 +453,7 @@ public class JobRestServiceQueryTest extends AbstractRestServiceTest {
     parameters.put("priorityLowerThanOrEquals", JOB_QUERY_MAX_PRIORITY);
     parameters.put("priorityHigherThanOrEquals", JOB_QUERY_MIN_PRIORITY);
     parameters.put("jobDefinitionId", MockProvider.EXAMPLE_JOB_DEFINITION_ID);
+    parameters.put("acquired", MockProvider.EXAMPLE_ACQUIRED);
     return parameters;
   }
 
@@ -456,6 +491,7 @@ public class JobRestServiceQueryTest extends AbstractRestServiceTest {
     verify(mockQuery).priorityLowerThanOrEquals(JOB_QUERY_MAX_PRIORITY);
     verify(mockQuery).priorityHigherThanOrEquals(JOB_QUERY_MIN_PRIORITY);
     verify(mockQuery).jobDefinitionId(MockProvider.EXAMPLE_JOB_DEFINITION_ID);
+    verify(mockQuery).acquired();
   }
 
   private void testDateParameters(DateParameters parameters) {

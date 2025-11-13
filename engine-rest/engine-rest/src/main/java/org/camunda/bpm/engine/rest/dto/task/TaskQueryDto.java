@@ -131,11 +131,13 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
   private String[] assigneeNotIn;
   private String candidateGroup;
   private String candidateGroupExpression;
+  private String candidateGroupLike;
   private String candidateUser;
   private String candidateUserExpression;
   private Boolean includeAssignedTasks;
   private String taskDefinitionKey;
   private String[] taskDefinitionKeyIn;
+  private String[] taskDefinitionKeyNotIn;
   private String taskDefinitionKeyLike;
   private String taskId;
   private String[] taskIdIn;
@@ -211,6 +213,12 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
   private List<VariableQueryParameterDto> caseInstanceVariables;
 
   private List<TaskQueryDto> orQueries;
+
+  private Boolean withCommentAttachmentInfo;
+
+  private Boolean withTaskVariablesInReturn;
+
+  private Boolean withTaskLocalVariablesInReturn;
 
   public TaskQueryDto() {
 
@@ -345,6 +353,11 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
     this.candidateGroupExpression = candidateGroupExpression;
   }
 
+  @CamundaQueryParam("candidateGroupLike")
+  public void setCandidateGroupLike(String candidateGroupLike) {
+    this.candidateGroupLike = candidateGroupLike;
+  }
+
   @CamundaQueryParam(value = "withCandidateGroups", converter = BooleanConverter.class)
   public void setWithCandidateGroups(Boolean withCandidateGroups) {
     this.withCandidateGroups = withCandidateGroups;
@@ -398,6 +411,11 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
   @CamundaQueryParam(value = "taskDefinitionKeyIn", converter= StringArrayConverter.class)
   public void setTaskDefinitionKeyIn(String[] taskDefinitionKeyIn) {
     this.taskDefinitionKeyIn = taskDefinitionKeyIn;
+  }
+
+  @CamundaQueryParam(value = "taskDefinitionKeyNotIn", converter= StringArrayConverter.class)
+  public void setTaskDefinitionKeyNotIn(String[] taskDefinitionKeyNotIn) {
+    this.taskDefinitionKeyNotIn = taskDefinitionKeyNotIn;
   }
 
   @CamundaQueryParam("taskDefinitionKeyLike")
@@ -708,6 +726,21 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
     this.variableValuesIgnoreCase = variableValuesCaseInsensitive;
   }
 
+  @CamundaQueryParam(value = "withCommentAttachmentInfo", converter = BooleanConverter.class)
+  public void setWithCommentAttachmentInfo(Boolean withCommentAttachmentInfo) {
+    this.withCommentAttachmentInfo = withCommentAttachmentInfo;
+  }
+
+  @CamundaQueryParam(value = "withTaskVariablesInReturn", converter = BooleanConverter.class)
+  public void setWithTaskVariablesInReturn(Boolean withTaskVariablesInReturn) {
+    this.withTaskVariablesInReturn = withTaskVariablesInReturn;
+  }
+
+  @CamundaQueryParam(value = "withTaskLocalVariablesInReturn", converter = BooleanConverter.class)
+  public void setWithTaskLocalVariablesInReturn(Boolean withTaskLocalVariablesInReturn) {
+    this.withTaskLocalVariablesInReturn = withTaskLocalVariablesInReturn;
+  }
+
   @Override
   protected boolean isValidSortByValue(String value) {
     return VALID_SORT_BY_VALUES.contains(value);
@@ -814,6 +847,10 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
     return candidateGroupExpression;
   }
 
+  public String getCandidateGroupLike() {
+    return candidateGroupLike;
+  }
+
   public String getCandidateUser() {
     return candidateUser;
   }
@@ -836,6 +873,10 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
 
   public String[] getTaskDefinitionKeyIn() {
     return taskDefinitionKeyIn;
+  }
+
+  public String[] getTaskDefinitionKeyNotIn() {
+    return taskDefinitionKeyNotIn;
   }
 
   public String getTaskDefinitionKey() {
@@ -1078,6 +1119,16 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
     return variableValuesIgnoreCase;
   }
 
+  public Boolean getWithCommentAttachmentInfo() { return withCommentAttachmentInfo;}
+
+  public Boolean getWithTaskVariablesInReturn() {
+    return withTaskVariablesInReturn;
+  }
+
+  public Boolean getWithTaskLocalVariablesInReturn() {
+    return withTaskLocalVariablesInReturn;
+  }
+
   @Override
   protected void applyFilters(TaskQuery query) {
     if (orQueries != null) {
@@ -1160,6 +1211,9 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
     if (candidateGroupExpression != null) {
       query.taskCandidateGroupExpression(candidateGroupExpression);
     }
+    if (candidateGroupLike != null) {
+      query.taskCandidateGroupLike(candidateGroupLike);
+    }
     if (withCandidateGroups != null && withCandidateGroups) {
       query.withCandidateGroups();
     }
@@ -1186,6 +1240,9 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
     }
     if (taskDefinitionKeyIn != null && taskDefinitionKeyIn.length > 0) {
       query.taskDefinitionKeyIn(taskDefinitionKeyIn);
+    }
+    if (taskDefinitionKeyNotIn != null && taskDefinitionKeyNotIn.length > 0) {
+      query.taskDefinitionKeyNotIn(taskDefinitionKeyNotIn);
     }
     if (taskDefinitionKey != null) {
       query.taskDefinitionKey(taskDefinitionKey);
@@ -1442,6 +1499,9 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
         }
       }
     }
+    if (withCommentAttachmentInfo != null && withCommentAttachmentInfo) {
+      query.withCommentAttachmentInfo();
+    }
   }
 
   @Override
@@ -1558,6 +1618,7 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
 
     dto.candidateUser = taskQuery.getCandidateUser();
     dto.candidateGroup = taskQuery.getCandidateGroup();
+    dto.candidateGroupLike = taskQuery.getCandidateGroupLike();
     dto.candidateGroups = taskQuery.getCandidateGroupsInternal();
     dto.includeAssignedTasks = taskQuery.isIncludeAssignedTasksInternal();
     dto.withCandidateGroups = taskQuery.isWithCandidateGroups();
@@ -1589,6 +1650,7 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
     dto.assigneeLike = taskQuery.getAssigneeLike();
     dto.taskDefinitionKey = taskQuery.getKey();
     dto.taskDefinitionKeyIn = taskQuery.getKeys();
+    dto.taskDefinitionKeyNotIn = taskQuery.getKeyNotIn();
     dto.taskDefinitionKeyLike = taskQuery.getKeyLike();
     dto.description = taskQuery.getDescription();
     dto.descriptionLike = taskQuery.getDescriptionLike();

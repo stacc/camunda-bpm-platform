@@ -128,6 +128,10 @@ public class TaskEntity extends AbstractVariableScope implements Task, DelegateT
   protected int suspensionState = SuspensionState.ACTIVE.getStateCode();
   protected TaskState lifecycleState = TaskState.STATE_INIT;
   protected String tenantId;
+  /**
+   * Task State of task
+   */
+  protected String taskState;
 
   protected boolean isIdentityLinksInitialized = false;
   protected transient List<IdentityLinkEntity> taskIdentityLinkEntities = new ArrayList<>();
@@ -159,6 +163,8 @@ public class TaskEntity extends AbstractVariableScope implements Task, DelegateT
   protected boolean isFormKeyInitialized = false;
   protected String formKey;
   protected CamundaFormRef camundaFormRef;
+  protected boolean attachmentExists;
+  protected boolean commentExists;
 
   @SuppressWarnings({ "unchecked" })
   protected transient VariableStore<VariableInstanceEntity> variableStore
@@ -189,12 +195,12 @@ public class TaskEntity extends AbstractVariableScope implements Task, DelegateT
   public static final String PRIORITY = "priority";
   public static final String CASE_INSTANCE_ID = "caseInstanceId";
 
-
   /**
    * Mybatis constructor
    */
   public TaskEntity() {
     this.lifecycleState = TaskState.STATE_CREATED;
+    this.taskState = TaskState.STATE_CREATED.taskState;
   }
 
   /**
@@ -203,12 +209,14 @@ public class TaskEntity extends AbstractVariableScope implements Task, DelegateT
   public TaskEntity(String id) {
     this(TaskState.STATE_INIT);
     this.id = id;
+    this.taskState = TaskState.STATE_INIT.taskState;
   }
 
   protected TaskEntity(TaskState initialState) {
     this.isIdentityLinksInitialized = true;
     this.setCreateTime(ClockUtil.getCurrentTime());
     this.lifecycleState = initialState;
+    this.taskState = this.lifecycleState.taskState;
   }
 
   /**
@@ -441,6 +449,9 @@ public class TaskEntity extends AbstractVariableScope implements Task, DelegateT
     }
     if (tenantId != null) {
       persistentState.put("tenantId", this.tenantId);
+    }
+    if (taskState != null) {
+      persistentState.put("taskState", this.taskState);
     }
 
     persistentState.put("suspensionState", this.suspensionState);
@@ -1169,6 +1180,7 @@ public class TaskEntity extends AbstractVariableScope implements Task, DelegateT
 
   public boolean transitionTo(TaskState state) {
     this.lifecycleState = state;
+    this.taskState = this.lifecycleState.taskState;
 
     switch (state) {
     case STATE_CREATED:
@@ -1194,6 +1206,7 @@ public class TaskEntity extends AbstractVariableScope implements Task, DelegateT
     if (lifecycleState == TaskState.STATE_CREATED) {
       registerCommandContextCloseListener();
       setLastUpdated(ClockUtil.getCurrentTime());
+      setTaskState(TaskState.STATE_UPDATED.taskState);
       return fireEvent(TaskListener.EVENTNAME_UPDATE) && fireAssignmentEvent();
     }
     else {
@@ -1452,6 +1465,10 @@ public class TaskEntity extends AbstractVariableScope implements Task, DelegateT
       }
     }
   }
+  public void initializeAttachmentAndComments(){
+    this.attachmentExists = !Context.getCommandContext().getAttachmentManager().findAttachmentsByTaskId(id).isEmpty();
+    this.commentExists = !Context.getCommandContext().getCommentManager().findCommentsByTaskId(id).isEmpty();
+  }
 
   @Override
   public String getFormKey() {
@@ -1584,6 +1601,17 @@ public class TaskEntity extends AbstractVariableScope implements Task, DelegateT
   public void setTenantId(String tenantId) {
     this.tenantId = tenantId;
   }
+
+  @Override
+  public String getTaskState() {
+    return taskState;
+  }
+
+  @Override
+  public void setTaskState(String taskState) {
+    this.taskState = taskState;
+  }
+
 
   @Override
   public void setFollowUpDate(Date followUpDate) {
@@ -1759,7 +1787,14 @@ public class TaskEntity extends AbstractVariableScope implements Task, DelegateT
       throw ProcessEngineLogger.CMD_LOGGER.exceptionBpmnErrorPropagationFailed(errorCode, ex);
     }
   }
-
+  @Override
+  public boolean hasAttachment() {
+    return attachmentExists;
+  }
+  @Override
+  public boolean hasComment() {
+    return commentExists;
+  }
   public void escalation(String escalationCode, Map<String, Object> variables) {
     ensureTaskActive();
     ActivityExecution activityExecution = getExecution();
@@ -1775,10 +1810,17 @@ public class TaskEntity extends AbstractVariableScope implements Task, DelegateT
 
   public static enum TaskState {
 
-    STATE_INIT,
-    STATE_CREATED,
-    STATE_COMPLETED,
-    STATE_DELETED
+    STATE_INIT ("Init"),
+    STATE_CREATED ("Created"),
+    STATE_COMPLETED ("Completed"),
+    STATE_DELETED ("Deleted"),
+    STATE_UPDATED ("Updated");
+
+    private String taskState;
+
+    private TaskState(String taskState) {
+      this.taskState = taskState;
+    }
   }
 
 }

@@ -5,13 +5,17 @@
   <parent>
     <groupId>org.camunda.bpm.run</groupId>
     <artifactId>camunda-bpm-run-root</artifactId>
-    <version>7.21.0</version>
+    <version>7.24.0</version>
     <relativePath>..</relativePath>
   </parent>
 
   <artifactId>camunda-bpm-run-assembly</artifactId>
   <name>Camunda Platform - Run - Assembly</name>
   <packaging>pom</packaging>
+
+  <description>
+    Note: 7.24.0 is the last community edition release published on Maven Central. This library will not receive any new versions or releases. However, if you are interested in extended maintenance you could look into our enterprise edition. Get in touch with us: https://camunda.com/contact/
+  </description>
   
   <properties>
     <!-- generate a bom of compile time dependencies for the license book.
@@ -24,7 +28,7 @@
     <dependencies>
       <!-- override the Spring Boot Groovy version with the Camunda Groovy version -->
       <dependency>
-        <groupId>org.codehaus.groovy</groupId>
+        <groupId>org.apache.groovy</groupId>
         <artifactId>groovy-bom</artifactId>
         <version>${version.groovy}</version>
         <scope>import</scope>
@@ -49,13 +53,14 @@
       </exclusions>
     </dependency>
 
+    <!-- make sure this runs after the oauth2 module -->
     <dependency>
       <groupId>org.camunda.bpm.run</groupId>
-      <artifactId>camunda-bpm-run-modules-swaggerui</artifactId>
+      <artifactId>camunda-bpm-run-modules-oauth2</artifactId>
       <version>${project.version}</version>
-      <type>jar</type>
+      <type>pom</type>
       <exclusions>
-        <!-- do not add transitive dependencies to generated dependency list -->
+        <!-- we don't need any transitive dependencies -->
         <exclusion>
           <groupId>*</groupId>
           <artifactId>*</artifactId>
@@ -103,20 +108,28 @@
     </dependency>
 
     <dependency>
-      <groupId>org.codehaus.groovy</groupId>
+      <groupId>org.apache.groovy</groupId>
       <artifactId>groovy-jsr223</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.codehaus.groovy</groupId>
+      <groupId>org.apache.groovy</groupId>
       <artifactId>groovy-json</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.codehaus.groovy</groupId>
+      <groupId>org.apache.groovy</groupId>
       <artifactId>groovy-xml</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.codehaus.groovy</groupId>
+      <groupId>org.apache.groovy</groupId>
       <artifactId>groovy-templates</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.groovy</groupId>
+      <artifactId>groovy-dateutil</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.groovy</groupId>
+      <artifactId>groovy-datetime</artifactId>
     </dependency>
 
   </dependencies>

@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.camunda.bpm</groupId>
     <artifactId>camunda-bom-root</artifactId>
-    <version>7.21.0</version>
+    <version>7.24.0</version>
     <relativePath>../</relativePath>
   </parent>
 
@@ -14,7 +14,10 @@
   <name>Camunda Platform Only - Bom</name>
   <url>http://camunda.org</url>
 
-  <description>Camunda Platform Only bill of material</description>
+  <description>
+    Camunda Platform Only bill of material.
+    Note: 7.24.0 is the last community edition release published on Maven Central. This library will not receive any new versions or releases. However, if you are interested in extended maintenance you could look into our enterprise edition. Get in touch with us: https://camunda.com/contact/
+  </description>
 
   <licenses>
     <license>
@@ -181,6 +184,11 @@
       </dependency>
       <dependency>
         <groupId>org.camunda.bpm.springboot</groupId>
+        <artifactId>camunda-bpm-spring-boot-starter-security</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.camunda.bpm.springboot</groupId>
         <artifactId>camunda-bpm-spring-boot-starter-webapp-ee</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -203,6 +211,32 @@
         <groupId>org.camunda.bpm</groupId>
         <artifactId>camunda-bpm-assert</artifactId>
         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.camunda.spin</groupId>
+        <artifactId>camunda-spin-bom</artifactId>
+        <version>${project.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>org.camunda.commons</groupId>
+        <artifactId>camunda-commons-bom</artifactId>
+        <version>${project.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>org.camunda.template-engines</groupId>
+        <artifactId>camunda-template-engines-freemarker</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.camunda.connect</groupId>
+        <artifactId>camunda-connect-bom</artifactId>
+        <version>${project.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
       </dependency>
 
       <!-- dmn engine dependencies
@@ -243,45 +277,6 @@
         <groupId>org.camunda.bpm.springboot</groupId>
         <artifactId>camunda-bpm-spring-boot-starter-external-task-client</artifactId>
         <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <!--
-            make sure everybody uses the same commons version
-        -->
-        <groupId>org.camunda.commons</groupId>
-        <artifactId>camunda-commons-bom</artifactId>
-        <version>${version.camunda.commons}</version>
-        <scope>import</scope>
-        <type>pom</type>
-      </dependency>
-
-      <!-- camunda-commons-typed-values: part of the platform and shares the same version -->
-      <dependency>
-        <groupId>org.camunda.commons</groupId>
-        <artifactId>camunda-commons-typed-values</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <!-- optional dependencies -->
-      <dependency>
-        <groupId>org.camunda.connect</groupId>
-        <artifactId>camunda-connect-bom</artifactId>
-        <version>${version.camunda.connect}</version>
-        <scope>import</scope>
-        <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>org.camunda.spin</groupId>
-        <artifactId>camunda-spin-bom</artifactId>
-        <version>${version.camunda.spin}</version>
-        <scope>import</scope>
-        <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>org.camunda.template-engines</groupId>
-        <artifactId>camunda-template-engines-freemarker</artifactId>
-        <version>${version.camunda.freemarker.template.engine}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

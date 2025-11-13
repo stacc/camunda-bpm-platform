@@ -4,11 +4,15 @@
   <parent>
     <groupId>org.camunda.bpm.qa.upgrade</groupId>
     <artifactId>camunda-qa-db-instance-migration</artifactId>
-    <version>7.21.0</version>
+    <version>7.24.0</version>
   </parent>
 
   <artifactId>camunda-qa-upgrade-test-migration</artifactId>
   <packaging>jar</packaging>
+
+  <description>
+    Note: 7.24.0 is the last community edition release published on Maven Central. This library will not receive any new versions or releases. However, if you are interested in extended maintenance you could look into our enterprise edition. Get in touch with us: https://camunda.com/contact/
+  </description>
   <name>Camunda Platform - QA - upgrade - instance migration - test</name>
 
   <dependencies>
@@ -40,7 +44,7 @@
     </dependency>
 
     <dependency>
-      <groupId>org.codehaus.groovy</groupId>
+      <groupId>org.apache.groovy</groupId>
       <artifactId>groovy-jsr223</artifactId>
     </dependency>
 
@@ -150,6 +154,17 @@
           </plugin>
         </plugins>
       </build>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-framework-bom</artifactId>
+            <version>${version.spring.framework}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
     </profile>
 
     <profile>
@@ -204,34 +219,6 @@
       </build>
     </profile>
 
-    <profile>
-      <id>cockroachdb</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <redirectTestOutputToFile>true</redirectTestOutputToFile>
-              <!-- exclude instance migration tests for older Camunda versions (<7.14) before Cockroachdb support was added -->
-              <excludes combine.children="append">
-                <exclude>**/authorization/**</exclude>
-                <exclude>**/scenarios720/**</exclude>
-                <exclude>**/scenarios730/**</exclude>
-                <exclude>**/scenarios750/**</exclude>
-                <exclude>**/scenarios760/**</exclude>
-                <exclude>**/scenarios770/**</exclude>
-                <exclude>**/scenarios780/**</exclude>
-                <exclude>**/scenarios790/**</exclude>
-                <exclude>**/scenarios7110/**</exclude>
-                <exclude>**/scenarios7120/**</exclude>
-                <exclude>**/scenarios7130/**</exclude>
-              </excludes>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
   </profiles>
 
 

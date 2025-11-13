@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import javax.ws.rs.core.MediaType;
@@ -46,13 +47,7 @@ import org.camunda.bpm.engine.impl.form.validator.FormFieldValidationException;
 import org.camunda.bpm.engine.impl.identity.Authentication;
 import org.camunda.bpm.engine.rest.dto.VariableValueDto;
 import org.camunda.bpm.engine.rest.dto.converter.StringListConverter;
-import org.camunda.bpm.engine.rest.dto.task.CompleteTaskDto;
-import org.camunda.bpm.engine.rest.dto.task.FormDto;
-import org.camunda.bpm.engine.rest.dto.task.IdentityLinkDto;
-import org.camunda.bpm.engine.rest.dto.task.TaskBpmnErrorDto;
-import org.camunda.bpm.engine.rest.dto.task.TaskDto;
-import org.camunda.bpm.engine.rest.dto.task.TaskEscalationDto;
-import org.camunda.bpm.engine.rest.dto.task.UserIdDto;
+import org.camunda.bpm.engine.rest.dto.task.*;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
 import org.camunda.bpm.engine.rest.exception.RestException;
 import org.camunda.bpm.engine.rest.hal.Hal;
@@ -78,12 +73,24 @@ public class TaskResourceImpl implements TaskResource {
   protected String taskId;
   protected String rootResourcePath;
   protected ObjectMapper objectMapper;
+  protected boolean withCommentAttachmentInfo;
+  protected boolean withTaskVariablesInReturn;
+  protected boolean withTaskLocalVariablesInReturn;
 
-  public TaskResourceImpl(ProcessEngine engine, String taskId, String rootResourcePath, ObjectMapper objectMapper) {
+  public TaskResourceImpl(ProcessEngine engine,
+                          String taskId,
+                          String rootResourcePath,
+                          ObjectMapper objectMapper,
+                          boolean withCommentAttachmentInfo,
+                          boolean withTaskVariablesInReturn,
+                          boolean withTaskLocalVariablesInReturn) {
     this.engine = engine;
     this.taskId = taskId;
     this.rootResourcePath = rootResourcePath;
     this.objectMapper = objectMapper;
+    this.withCommentAttachmentInfo = withCommentAttachmentInfo;
+    this.withTaskVariablesInReturn = withTaskVariablesInReturn;
+    this.withTaskLocalVariablesInReturn = withTaskLocalVariablesInReturn;
   }
 
   @Override
@@ -192,16 +199,27 @@ public class TaskResourceImpl implements TaskResource {
   }
 
   public TaskDto getJsonTask() {
-    Task task = getTaskById(taskId);
+    Task task = getTaskById(taskId, withCommentAttachmentInfo);
     if (task == null) {
       throw new InvalidRequestException(Status.NOT_FOUND, "No matching task with id " + taskId);
     }
-
-    return TaskDto.fromEntity(task);
+    if ((withTaskVariablesInReturn || withTaskLocalVariablesInReturn) && withCommentAttachmentInfo) {
+      Map<String, VariableValueDto> taskVariables = getTaskVariables(withTaskVariablesInReturn);
+      return TaskWithAttachmentAndCommentDto.fromEntity(task, taskVariables);
+    }
+    if (withCommentAttachmentInfo) {
+      return TaskWithAttachmentAndCommentDto.fromEntity(task, null);
+    }
+    if (withTaskVariablesInReturn || withTaskLocalVariablesInReturn) {
+      Map<String, VariableValueDto> taskVariables = getTaskVariables(withTaskVariablesInReturn);
+      return TaskWithVariablesDto.fromEntity(task, taskVariables);
+    } else {
+      return TaskDto.fromEntity(task);
+    }
   }
 
   public HalTask getHalTask() {
-    Task task = getTaskById(taskId);
+    Task task = getTaskById(taskId, withCommentAttachmentInfo);
     if (task == null) {
       throw new InvalidRequestException(Status.NOT_FOUND, "No matching task with id " + taskId);
     }
@@ -212,7 +230,7 @@ public class TaskResourceImpl implements TaskResource {
   @Override
   public FormDto getForm() {
     FormService formService = engine.getFormService();
-    Task task = getTaskById(taskId);
+    Task task = getTaskById(taskId, withCommentAttachmentInfo);
     FormData formData;
     try {
       formData = formService.getTaskFormData(taskId);
@@ -368,7 +386,7 @@ public class TaskResourceImpl implements TaskResource {
   public void updateTask(TaskDto taskDto) {
     TaskService taskService = engine.getTaskService();
 
-    Task task = getTaskById(taskId);
+    Task task = getTaskById(taskId, withCommentAttachmentInfo);
 
     if (task == null) {
       throw new InvalidRequestException(Status.NOT_FOUND, "No matching task with id " + taskId);
@@ -433,8 +451,13 @@ public class TaskResourceImpl implements TaskResource {
     }
   }
 
-  protected Task getTaskById(String id) {
-    return engine.getTaskService().createTaskQuery().taskId(id).initializeFormKeys().singleResult();
+  protected Task getTaskById(String id, boolean withCommentAttachmentInfo) {
+    if (withCommentAttachmentInfo) {
+      return engine.getTaskService().createTaskQuery().taskId(id).withCommentAttachmentInfo().initializeFormKeys().singleResult();
+    }
+    else{
+      return engine.getTaskService().createTaskQuery().taskId(id).initializeFormKeys().singleResult();
+    }
   }
 
   protected String getTaskFormMediaType(String taskId) {
@@ -460,6 +483,16 @@ public class TaskResourceImpl implements TaskResource {
     } finally {
       identityService.setAuthentication(currentAuthentication);
     }
+  }
+
+  private Map<String, VariableValueDto> getTaskVariables(boolean withTaskVariablesInReturn) {
+    VariableResource variableResource;
+    if (withTaskVariablesInReturn) {
+      variableResource = this.getVariables();
+    } else {
+      variableResource = this.getLocalVariables();
+    }
+    return variableResource.getVariables(true);
   }
 
 }

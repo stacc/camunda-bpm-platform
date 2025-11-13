@@ -5,13 +5,17 @@
   <parent>
     <groupId>org.camunda.bpm.run</groupId>
     <artifactId>camunda-bpm-run-root</artifactId>
-    <version>7.21.0</version>
+    <version>7.24.0</version>
     <relativePath>..</relativePath>
   </parent>
 
   <artifactId>camunda-bpm-run-core</artifactId>
   <name>Camunda Platform - Run - Core</name>
   <packaging>jar</packaging>
+
+  <description>
+    Note: 7.24.0 is the last community edition release published on Maven Central. This library will not receive any new versions or releases. However, if you are interested in extended maintenance you could look into our enterprise edition. Get in touch with us: https://camunda.com/contact/
+  </description>
 
   <properties>
     <!-- generate a bom of compile time dependencies for the license book.
@@ -71,7 +75,7 @@
       </exclusions>
     </dependency>
 
-    <!-- spring-webmvc is not a direct requirement of run-core, but is required by modules/swaggerui and modules/webapps.
+    <!-- spring-webmvc is not a direct requirement of run-core, but is required by modules/webapps.
       To avoid having it on the classpath twice, it is included here and becomes part of the uberjar.-->
     <dependency>
       <groupId>org.springframework</groupId>

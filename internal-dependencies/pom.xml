@@ -6,14 +6,17 @@
     <groupId>org.camunda.bpm</groupId>
     <artifactId>camunda-parent</artifactId>
     <relativePath>../parent</relativePath>
-    <version>7.21.0</version>
+    <version>7.24.0</version>
   </parent>
 
   <artifactId>camunda-core-internal-dependencies</artifactId>
   <packaging>pom</packaging>
   <name>Camunda Platform - Core - Internal Dependencies</name>
 
-  <description>Camunda Platform core internal bill of material for dependencies</description>
+  <description>
+    Camunda Platform core internal bill of material for dependencies.
+    Note: 7.24.0 is the last community edition release published on Maven Central. This library will not receive any new versions or releases. However, if you are interested in extended maintenance you could look into our enterprise edition. Get in touch with us: https://camunda.com/contact/
+  </description>
 
   <dependencyManagement>
     <dependencies>
@@ -62,12 +65,12 @@
       <dependency>
         <groupId>commons-io</groupId>
         <artifactId>commons-io</artifactId>
-        <version>2.8.0</version>
+        <version>2.17.0</version>
       </dependency>
       <dependency>
         <groupId>commons-fileupload</groupId>
         <artifactId>commons-fileupload</artifactId>
-        <version>1.5</version>
+        <version>1.6.0</version>
       </dependency>
 
       <dependency>
@@ -137,11 +140,6 @@
         <version>1.1.1</version>
       </dependency>
       <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml</artifactId>
-        <version>1.1</version>
-      </dependency>
-      <dependency>
         <groupId>org.apache.openjpa</groupId>
         <artifactId>openjpa</artifactId>
         <version>${version.openjpa}</version>
@@ -149,7 +147,7 @@
 
       <!-- groovy script engine dependencies -->
       <dependency>
-        <groupId>org.codehaus.groovy</groupId>
+        <groupId>org.apache.groovy</groupId>
         <artifactId>groovy-bom</artifactId>
         <version>${version.groovy}</version>
         <scope>import</scope>
@@ -165,11 +163,6 @@
         <groupId>org.graalvm.js</groupId>
         <artifactId>js-scriptengine</artifactId>
         <version>${version.graal.js}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.json</groupId>
-        <artifactId>json</artifactId>
-        <version>20070829</version>
       </dependency>
       <dependency>
         <groupId>org.hamcrest</groupId>
@@ -298,8 +291,8 @@
 
       <dependency>
         <groupId>org.apache.tomcat</groupId>
-        <artifactId>catalina</artifactId>
-        <version>6.0.37</version>
+        <artifactId>tomcat-catalina</artifactId>
+        <version>${version.tomcat}</version>
       </dependency>
 
       <dependency>
@@ -311,8 +304,8 @@
           the exclusion here, please make sure to add it in the REST API projects -->
         <exclusions>
           <exclusion>
-            <artifactId>httpclient</artifactId>
-            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient5</artifactId>
+            <groupId>org.apache.httpcomponents.client5</groupId>
           </exclusion>
           <exclusion>
             <groupId>commons-httpclient</groupId>
@@ -359,13 +352,6 @@
       </dependency>
 
       <dependency>
-        <groupId>com.github.tomakehurst</groupId>
-        <artifactId>wiremock-jre8-standalone</artifactId>
-        <version>${version.wiremock-jre8}</version>
-        <scope>test</scope>
-      </dependency>
-
-      <dependency>
         <groupId>org.skyscreamer</groupId>
         <artifactId>jsonassert</artifactId>
         <version>1.5.0</version>
@@ -384,11 +370,6 @@
       </dependency>
       <dependency>
         <groupId>org.testcontainers</groupId>
-        <artifactId>mariadb</artifactId>
-        <version>${version.testcontainers}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.testcontainers</groupId>
         <artifactId>postgresql</artifactId>
         <version>${version.testcontainers}</version>
       </dependency>
@@ -397,10 +378,23 @@
         <artifactId>mssqlserver</artifactId>
         <version>${version.testcontainers}</version>
       </dependency>
+
       <dependency>
-        <groupId>org.testcontainers</groupId>
-        <artifactId>cockroachdb</artifactId>
-        <version>${version.testcontainers}</version>
+        <groupId>net.minidev</groupId>
+        <artifactId>json-smart</artifactId>
+        <version>${version.json-smart}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.jayway.jsonpath</groupId>
+        <artifactId>json-path</artifactId>
+        <version>${version.json-path}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.cronutils</groupId>
+        <artifactId>cron-utils</artifactId>
+        <version>${version.cronutils}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

@@ -5,11 +5,15 @@
   <name>Camunda Platform - engine - REST Jakarta</name>
   <packaging>jar</packaging>
 
+  <description>
+    Note: 7.24.0 is the last community edition release published on Maven Central. This library will not receive any new versions or releases. However, if you are interested in extended maintenance you could look into our enterprise edition. Get in touch with us: https://camunda.com/contact/
+  </description>
+
   <parent>
     <groupId>org.camunda.bpm</groupId>
     <artifactId>camunda-engine-rest-root</artifactId>
     <relativePath>../</relativePath>
-    <version>7.21.0</version>
+    <version>7.24.0</version>
   </parent>
 
   <properties>
@@ -714,6 +718,12 @@
               <artifactId>spring-jcl</artifactId>
             </exclusion>
           </exclusions>
+        </dependency>
+        <dependency>
+          <groupId>org.springframework</groupId>
+          <artifactId>spring-web</artifactId>
+          <version>${version.spring.framework}</version>
+          <scope>test</scope>
         </dependency>
       </dependencies>
     </profile>

@@ -4,12 +4,16 @@
   <artifactId>camunda-qa-tomcat-runtime</artifactId>
   <packaging>pom</packaging>
 
+  <description>
+    Note: 7.24.0 is the last community edition release published on Maven Central. This library will not receive any new versions or releases. However, if you are interested in extended maintenance you could look into our enterprise edition. Get in touch with us: https://camunda.com/contact/
+  </description>
+
   <name>Camunda Platform - QA Tomcat Test Runtime</name>
 
   <parent>
     <groupId>org.camunda.bpm.qa</groupId>
     <artifactId>camunda-qa</artifactId>
-    <version>7.21.0</version>
+    <version>7.24.0</version>
   </parent>
 
   <dependencies>
@@ -40,9 +44,16 @@
       <artifactId>jython</artifactId>
       <scope>runtime</scope>
     </dependency>
+
     <dependency>
       <groupId>org.jruby</groupId>
       <artifactId>jruby-complete</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
       <scope>runtime</scope>
     </dependency>
 
@@ -130,6 +141,18 @@
           </plugin>
         </plugins>
       </build>
+    </profile>
+
+    <profile>
+      <id>engine-integration-jakarta</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.jboss.weld.servlet</groupId>
+          <artifactId>weld-servlet-shaded</artifactId>
+          <version>5.1.2.Final</version>
+          <scope>runtime</scope>
+        </dependency>
+      </dependencies>
     </profile>
   </profiles>
 </project>

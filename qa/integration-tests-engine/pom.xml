@@ -1,13 +1,17 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <description>
+    Note: 7.24.0 is the last community edition release published on Maven Central. This library will not receive any new versions or releases. However, if you are interested in extended maintenance you could look into our enterprise edition. Get in touch with us: https://camunda.com/contact/
+  </description>
+
   <artifactId>camunda-qa-integration-tests-engine</artifactId>
   <name>Camunda Platform - QA Integration Tests - Engine</name>
 
   <parent>
     <groupId>org.camunda.bpm.qa</groupId>
     <artifactId>camunda-qa</artifactId>
-    <version>7.21.0</version>
+    <version>7.24.0</version>
   </parent>
 
   <properties>
@@ -81,18 +85,6 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.github.tomakehurst</groupId>
-      <artifactId>wiremock-jre8-standalone</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <!-- required for wiremock-jre8-standalone - see CAM-14755 -->
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-jdk14</artifactId>
     </dependency>
 
     <dependency>
@@ -245,7 +237,7 @@
 
     <!-- required for TestWarDeploymentWithProcessEnginePlugin -->
     <dependency>
-      <groupId>org.codehaus.groovy</groupId>
+      <groupId>org.apache.groovy</groupId>
       <artifactId>groovy-jsr223</artifactId>
       <scope>test</scope>
     </dependency>
@@ -369,6 +361,7 @@
                 <exclude>**/TestWarDeploymentWithProcessEnginePlugin.exclude</exclude>
 
                 <exclude>**/SpringServletPATimerStartEventExpressionTest.java</exclude>
+                <exclude>**/FeelEngineTest.java</exclude>
               </excludes>
               <redirectTestOutputToFile>${redirect.test.output}</redirectTestOutputToFile>
             </configuration>
@@ -485,6 +478,7 @@
                 <exludes>**/TestWarDeploymentWithProcessEnginePlugin.java</exludes>
 
                 <exclude>**/SpringServletPATimerStartEventExpressionTest.java</exclude>
+                <exclude>**/FeelEngineTest.java</exclude>
               </excludes>
               <redirectTestOutputToFile>${redirect.test.output}</redirectTestOutputToFile>
             </configuration>
@@ -494,7 +488,7 @@
     </profile>
 
     <profile>
-      <id>tomcat</id>
+      <id>tomcat9</id>
       <dependencyManagement>
         <dependencies>
           <!-- import internal dependencies before JBoss to preserve internal versions, e.g. for JUnit -->
@@ -518,7 +512,7 @@
         <dependency>
           <!-- make sure this comes after runtime in the reactor build -->
           <groupId>org.camunda.bpm.qa</groupId>
-          <artifactId>camunda-qa-tomcat-runtime</artifactId>
+          <artifactId>camunda-qa-tomcat9-runtime</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
           <type>pom</type>
@@ -551,7 +545,7 @@
                 </goals>
                 <configuration>
                   <sources>
-                    <source>src/test/java-tomcat</source>
+                    <source>src/test/java-tomcat9</source>
                   </sources>
                 </configuration>
               </execution>

@@ -19,6 +19,8 @@ package org.camunda.bpm.engine.rest.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -32,6 +34,9 @@ import org.camunda.bpm.engine.rest.TaskRestService;
 import org.camunda.bpm.engine.rest.dto.CountResultDto;
 import org.camunda.bpm.engine.rest.dto.task.TaskDto;
 import org.camunda.bpm.engine.rest.dto.task.TaskQueryDto;
+import org.camunda.bpm.engine.rest.dto.task.TaskWithAttachmentAndCommentDto;
+import org.camunda.bpm.engine.rest.dto.task.TaskWithVariablesDto;
+import org.camunda.bpm.engine.rest.dto.VariableValueDto;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
 import org.camunda.bpm.engine.rest.hal.Hal;
 import org.camunda.bpm.engine.rest.hal.task.HalTaskList;
@@ -42,6 +47,7 @@ import org.camunda.bpm.engine.rest.sub.task.impl.TaskResourceImpl;
 import org.camunda.bpm.engine.rest.util.QueryUtil;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.engine.task.TaskQuery;
+import org.camunda.bpm.engine.variable.VariableMap;
 
 public class TaskRestServiceImpl extends AbstractRestProcessEngineAware implements TaskRestService {
 
@@ -66,6 +72,7 @@ public class TaskRestServiceImpl extends AbstractRestProcessEngineAware implemen
   }
 
   public List<TaskDto> getJsonTasks(UriInfo uriInfo, Integer firstResult, Integer maxResults) {
+    // get list of tasks
     TaskQueryDto queryDto = new TaskQueryDto(getObjectMapper(), uriInfo.getQueryParameters());
     return queryTasks(queryDto, firstResult, maxResults);
   }
@@ -93,13 +100,21 @@ public class TaskRestServiceImpl extends AbstractRestProcessEngineAware implemen
     TaskQuery query = queryDto.toQuery(engine);
 
     List<Task> matchingTasks = executeTaskQuery(firstResult, maxResults, query);
-
     List<TaskDto> tasks = new ArrayList<TaskDto>();
-    for (Task task : matchingTasks) {
-      TaskDto returnTask = TaskDto.fromEntity(task);
-      tasks.add(returnTask);
-    }
 
+    boolean withTaskVariables = Boolean.TRUE.equals(queryDto.getWithTaskVariablesInReturn());
+    boolean withTaskLocalVariables = Boolean.TRUE.equals(queryDto.getWithTaskLocalVariablesInReturn());
+    boolean withCommentInfo = Boolean.TRUE.equals(queryDto.getWithCommentAttachmentInfo());
+
+    if (withTaskVariables || withTaskLocalVariables) {
+      return getVariablesForTasks(engine, matchingTasks, withTaskVariables, withCommentInfo);
+    }
+    if (withCommentInfo) {
+      tasks = matchingTasks.stream().map(TaskWithAttachmentAndCommentDto::fromEntity).collect(Collectors.toList());
+    }
+    else {
+      tasks = matchingTasks.stream().map(TaskDto::fromEntity).collect(Collectors.toList());
+    }
     return tasks;
   }
 
@@ -130,8 +145,12 @@ public class TaskRestServiceImpl extends AbstractRestProcessEngineAware implemen
   }
 
   @Override
-  public TaskResource getTask(String id) {
-    return new TaskResourceImpl(getProcessEngine(), id, relativeRootResourcePath, getObjectMapper());
+  public TaskResource getTask(String id,
+                              boolean withCommentAttachmentInfo,
+                              boolean withTaskVariablesInReturn,
+                              boolean withTaskLocalVariablesInReturn) {
+    return new TaskResourceImpl(getProcessEngine(), id, relativeRootResourcePath, getObjectMapper(),
+        withCommentAttachmentInfo, withTaskVariablesInReturn, withTaskLocalVariablesInReturn);
   }
 
   @Override
@@ -154,5 +173,28 @@ public class TaskRestServiceImpl extends AbstractRestProcessEngineAware implemen
   @Override
   public TaskReportResource getTaskReportResource() {
     return new TaskReportResourceImpl(getProcessEngine());
+  }
+
+  private List<TaskDto> getVariablesForTasks(ProcessEngine engine,
+                                             List<Task> matchingTasks,
+                                             boolean withTaskVariablesInReturn,
+                                             boolean withCommentAndAttachments) {
+    TaskService taskService = engine.getTaskService();
+    List<TaskDto> tasks = new ArrayList<TaskDto>();
+    for (Task task : matchingTasks) {
+      VariableMap taskVariables;
+      if (withTaskVariablesInReturn) {
+        taskVariables = taskService.getVariablesTyped(task.getId(), true);
+      } else {
+        taskVariables = taskService.getVariablesLocalTyped(task.getId(), true);
+      }
+      Map<String, VariableValueDto> taskVariablesDto = VariableValueDto.fromMap(taskVariables);
+      if (withCommentAndAttachments) {
+        tasks.add(TaskWithAttachmentAndCommentDto.fromEntity(task, taskVariablesDto));
+      } else {
+        tasks.add(TaskWithVariablesDto.fromEntity(task, taskVariablesDto));
+      }
+    }
+    return tasks;
   }
 }

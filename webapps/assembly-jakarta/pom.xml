@@ -6,19 +6,23 @@
   <parent>
     <groupId>org.camunda.bpm.webapp</groupId>
     <artifactId>camunda-webapp-root</artifactId>
-    <version>7.21.0</version>
+    <version>7.24.0</version>
     <relativePath>../</relativePath>
   </parent>
 
   <artifactId>camunda-webapp-jakarta</artifactId>
   <packaging>war</packaging>
+
+  <description>
+    Note: 7.24.0 is the last community edition release published on Maven Central. This library will not receive any new versions or releases. However, if you are interested in extended maintenance you could look into our enterprise edition. Get in touch with us: https://camunda.com/contact/
+  </description>
   <name>Camunda Platform - Webapp - Assembly Jakarta</name>
 
   <properties>
     <jakarta.webapp>${project.build.directory}/generated-resources/jakarta-webapp</jakarta.webapp>
     <jakarta.runtime>${project.build.directory}/generated-resources/jakarta-runtime</jakarta.runtime>
 
-    <version.resteasy>6.2.3.Final</version.resteasy>
+    <version.resteasy>6.2.8.Final</version.resteasy>
     <version.jetty>11.0.14</version.jetty>
     <version.jersey2>3.1.1</version.jersey2>
 
@@ -445,7 +449,7 @@
 
   <profiles>
     <profile>
-      <id>sonatype-oss-release</id>
+      <id>central-sonatype-publish</id>
       <properties>
         <!-- skip building the frontend-sources zip artifact
         when releasing the community edition (alpha/minor releases) -->

@@ -56,7 +56,7 @@ pipeline {
         stage('check-sql-scripts') {
           when {
             expression {
-              cambpmWithLabels('all-db','h2','db2','mysql','oracle','mariadb','sqlserver','postgresql')
+              cambpmWithLabels('all','all-db','h2','db2','mysql','oracle','sqlserver','postgresql')
             }
           }
           steps {
@@ -79,10 +79,7 @@ pipeline {
                 cambpmRunMaven('.',
                   "package javadoc:javadoc javadoc:aggregate -Pdistro,distro-wildfly,distro-webjar,javadocs -pl " +
                   "'!distro/wildfly/modules,!distro/wildfly26/modules,!engine-rest/engine-rest-openapi' -DskipTests=true -Dskip.frontend.build=true",
-                  withNpm: true,
                   jdkVersion: 'jdk-17-latest')
-              },
-              postSuccess: {
                 def projectVersion = env.JOB_NAME.split('/')[0] + "-SNAPSHOT"
                 cambpmPublishDocs("\"target/site/apidocs/\"", projectVersion, "javadoc")
               }
@@ -95,14 +92,16 @@ pipeline {
           }
           steps {
             cambpmConditionalRetry([
-              agentLabel : 'centos-stable',
+              podSpec: [
+                cpu: 4,
+                images: ['alpine:3.20']
+              ],
               runSteps   : {
+                sh "apk -U add openjdk17-jdk maven rsync openssh libstdc++ libgcc bash"
                 cambpmRunMaven('./engine-rest',
                   "package -Dmaven.test.skip -pl '!engine-rest,!assembly'",
-                  withNpm: true,
-                  jdkVersion: 'jdk-11-latest')
-              },
-              postSuccess: {
+                  jdkVersion: 'jdk-11-latest',
+                  withPodSpec: true)
                 def projectVersion = env.JOB_NAME.split('/')[0] + "-SNAPSHOT"
                 cambpmPublishDocs("\"engine-rest/docs/target/index.html\"", projectVersion, "rest")
               }
@@ -156,21 +155,24 @@ pipeline {
           }
           steps {
             cambpmConditionalRetry([
-              agentLabel: 'h2_perf32',
+              podSpec: [
+                cpu: 32,
+                images: ['maven:3.9.7-eclipse-temurin-17']
+              ],
               runSteps: {
                 cambpmRunMaven('.',
                   "deploy source:jar source:test-jar javadoc:javadoc -Dskip-zip-frontend-sources=true -DaltStagingDirectory=${WORKSPACE}/staging -DskipRemoteStaging=true -B",
-                  withNpm: true,
-                  jdkVersion: 'jdk-17-latest')
+                  jdkVersion: 'jdk-17-latest',
+                  withPodSpec: true)
                 script {
-                  str = 's@:camunda-nexus:.*\\\$@:central:https://oss.sonatype.org/content/repositories/snapshots@g'
+                  str = 's@:camunda-nexus:.*\\\$@:central:https://central.sonatype.com/repository/maven-snapshots/@g'
                   sh(label: 'Change staging from Nexus to Maven Central snapshots', script: 'sed -i ' + str + ' staging/deferred/.index')
                 }
 
                 cambpmRunMaven('.',
                   "org.sonatype.plugins:nexus-staging-maven-plugin:deploy-staged -DaltStagingDirectory=${WORKSPACE}/staging -DskipStaging=true -B",
-                  withNpm: true,
-                  jdkVersion: 'jdk-17-latest')
+                  jdkVersion: 'jdk-17-latest',
+                  withPodSpec: true)
               },
               postFailure: {
                 cambpmPublishTestResult()
@@ -187,13 +189,16 @@ pipeline {
           }
           steps {
             cambpmConditionalRetry([
-              agentLabel: 'h2_perf32',
+              podSpec: [
+                cpu: 32,
+                images: ['maven:3.9.7-eclipse-temurin-17']
+              ],
               runSteps: {
                 cambpmRunMaven('.',
                   "install source:jar -Pdistro,distro-ce,distro-wildfly,distro-webjar -B",
-                  withNpm: true,
                   jdkVersion: 'jdk-17-latest',
-                  settingsXml: 'public-repo')
+                  settingsXml: 'public-repo',
+                  withPodSpec: true)
               },
               postFailure: {
                 cambpmPublishTestResult()
@@ -208,7 +213,7 @@ pipeline {
         stage('sql-scripts-h2') {
           when {
             expression {
-              cambpmWithLabels('h2', 'all-db')
+              cambpmWithLabels('all', 'h2', 'all-db')
             }
           }
           steps {
@@ -226,14 +231,14 @@ pipeline {
         stage('UPGRADE-instance-migration-h2') {
           when {
             expression {
-              cambpmWithLabels('default-build', 'migration')
+              cambpmWithLabels('all', 'default-build', 'migration')
             }
           }
           steps {
             cambpmConditionalRetry([
               agentLabel: 'h2',
               runSteps: {
-                cambpmRunMavenByStageType('instance-migration', 'h2')
+                cambpmRunMavenByStageType('instance-migration', 'h2', jdkVersion: 'jdk-11-latest')
               },
               postFailure: {
                 cambpmPublishTestResult()
@@ -245,14 +250,14 @@ pipeline {
         stage('UPGRADE-old-engine-h2') {
           when {
             expression {
-              cambpmWithLabels('h2', 'all-db')
+              cambpmWithLabels('all', 'h2', 'all-db')
             }
           }
           steps {
             cambpmConditionalRetry([
               agentLabel: 'h2',
               runSteps: {
-                cambpmRunMavenByStageType('old-engine', 'h2')
+                cambpmRunMavenByStageType('old-engine', 'h2', jdkVersion: 'jdk-11-latest')
               },
               postFailure: {
                 cambpmPublishTestResult()
@@ -264,14 +269,14 @@ pipeline {
         stage('UPGRADE-rolling-update-h2') {
           when {
             expression {
-              cambpmWithLabels('rolling-update', 'default-build')
+              cambpmWithLabels('all', 'rolling-update', 'default-build')
             }
           }
           steps {
             cambpmConditionalRetry([
               agentLabel: 'h2',
               runSteps: {
-                cambpmRunMavenByStageType('rolling-update', 'h2')
+                cambpmRunMavenByStageType('rolling-update', 'h2', jdkVersion: 'jdk-11-latest')
               },
               postFailure: {
                 cambpmPublishTestResult()
@@ -283,14 +288,14 @@ pipeline {
         stage('PERFORMANCE-large-data-h2') {
           when {
             expression {
-              cambpmWithLabels()
+              cambpmWithLabels('all')
             }
           }
           steps {
             cambpmConditionalRetry([
               agentLabel: 'h2',
               runSteps: {
-                cambpmRunMavenByStageType('large-data-tests', 'h2')
+                cambpmRunMavenByStageType('large-data-tests', 'h2', jdkVersion: 'jdk-17-latest')
               },
               postFailure: {
                 cambpmPublishTestResult()
@@ -320,7 +325,7 @@ pipeline {
           // see the .ci/config/matrices.yaml for the stage generation values
           // see .ci/config/stage-types.yaml for the stage configurations
           parallel(cambpmGetMatrixStages('jdk-ce-stages', failedStageTypes, { stageInfo ->
-            return cambpmWithLabels('default-build', 'jdk')
+            return cambpmWithLabels('all', 'default-build', 'jdk')
           }))
         }
       }

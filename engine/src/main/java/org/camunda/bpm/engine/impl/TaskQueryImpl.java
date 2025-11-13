@@ -44,6 +44,7 @@ import org.camunda.bpm.engine.task.DelegationState;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.engine.task.TaskQuery;
 import org.camunda.bpm.engine.variable.type.ValueType;
+import org.camunda.bpm.engine.impl.history.HistoryLevel;
 
 /**
  * @author Joram Barrez
@@ -113,6 +114,7 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
   protected DelegationState delegationState;
   protected String candidateUser;
   protected String candidateGroup;
+  protected String candidateGroupLike;
   protected List<String> candidateGroups;
   protected Boolean withCandidateGroups;
   protected Boolean withoutCandidateGroups;
@@ -130,6 +132,7 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
   protected String key;
   protected String keyLike;
   protected String[] taskDefinitionKeys;
+  protected String[] taskDefinitionKeyNotIn;
   protected String processDefinitionKey;
   protected String[] processDefinitionKeys;
   protected String processDefinitionId;
@@ -175,6 +178,7 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
   // or query /////////////////////////////
   protected List<TaskQueryImpl> queries = new ArrayList<>(Arrays.asList(this));
   protected boolean isOrQueryActive = false;
+  protected boolean withCommentAttachmentInfo;
 
   public TaskQueryImpl() {
   }
@@ -450,6 +454,18 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
   }
 
   @Override
+  public TaskQuery taskCandidateGroupLike(String candidateGroupLike) {
+    ensureNotNull("Candidate group like", candidateGroupLike);
+
+    if (!isOrQueryActive && (candidateUser != null || expressions.containsKey("taskCandidateUser"))) {
+      throw new ProcessEngineException("Invalid query usage: cannot set both candidateGroupLike and candidateUser");
+    }
+
+    this.candidateGroupLike = candidateGroupLike;
+    return this;
+  }
+
+  @Override
   public TaskQuery taskCandidateGroupIn(List<String> candidateGroups) {
     ensureNotEmpty("Candidate group list", candidateGroups);
 
@@ -480,10 +496,11 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
 
   @Override
   public TaskQuery includeAssignedTasks() {
-    if (candidateUser == null && candidateGroup == null && candidateGroups == null && !isWithCandidateGroups() && !isWithoutCandidateGroups() && !isWithCandidateUsers() && !isWithoutCandidateUsers()
+    if (candidateUser == null && candidateGroup == null && candidateGroupLike == null && candidateGroups == null
+        && !isWithCandidateGroups() && !isWithoutCandidateGroups() && !isWithCandidateUsers() && !isWithoutCandidateUsers()
         && !expressions.containsKey("taskCandidateUser") && !expressions.containsKey("taskCandidateGroup")
         && !expressions.containsKey("taskCandidateGroupIn")) {
-      throw new ProcessEngineException("Invalid query usage: candidateUser, candidateGroup, candidateGroupIn, withCandidateGroups, withoutCandidateGroups, withCandidateUsers, withoutCandidateUsers has to be called before 'includeAssignedTasks'.");
+      throw new ProcessEngineException("Invalid query usage: candidateUser, candidateGroup, candidateGroupLike, candidateGroupIn, withCandidateGroups, withoutCandidateGroups, withCandidateUsers, withoutCandidateUsers has to be called before 'includeAssignedTasks'.");
     }
 
     includeAssignedTasks = true;
@@ -652,6 +669,12 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
   public TaskQuery taskDefinitionKeyIn(String... taskDefinitionKeys) {
     this.taskDefinitionKeys = taskDefinitionKeys;
   	return this;
+  }
+  
+  @Override
+  public TaskQuery taskDefinitionKeyNotIn(String... taskDefinitionKeyNotIn) {
+    this.taskDefinitionKeyNotIn = taskDefinitionKeyNotIn;
+    return this;
   }
 
   @Override
@@ -1084,8 +1107,15 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
       || CompareUtil.areNotInAscendingOrder(followUpAfter, followUpDate, followUpBefore)
       || CompareUtil.areNotInAscendingOrder(createTimeAfter, createTime, createTimeBefore)
       || CompareUtil.elementIsNotContainedInArray(key, taskDefinitionKeys)
+      || CompareUtil.elementIsContainedInArray(key, taskDefinitionKeyNotIn)
       || CompareUtil.elementIsNotContainedInArray(processDefinitionKey, processDefinitionKeys)
       || CompareUtil.elementIsNotContainedInArray(processInstanceBusinessKey, processInstanceBusinessKeys);
+  }
+
+  @Override
+  public TaskQuery withCommentAttachmentInfo() {
+    this.withCommentAttachmentInfo = true;
+    return this;
   }
 
   public List<String> getCandidateGroups() {
@@ -1441,6 +1471,13 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
       }
     }
 
+    if (withCommentAttachmentInfo && !Context.getProcessEngineConfiguration().getHistoryLevel().equals(HistoryLevel.HISTORY_LEVEL_NONE)) {
+      for (Task task : taskList) {
+        // verify attachment and comments exists for the task
+        ((TaskEntity) task).initializeAttachmentAndComments();
+      }
+    }
+
     return taskList;
   }
 
@@ -1563,6 +1600,10 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
     return candidateGroup;
   }
 
+  public String getCandidateGroupLike() {
+    return candidateGroupLike;
+  }
+
   public boolean isIncludeAssignedTasks() {
     return includeAssignedTasks != null ? includeAssignedTasks : false;
   }
@@ -1641,6 +1682,10 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
 
   public String[] getKeys() {
     return taskDefinitionKeys;
+  }
+  
+  public String[] getKeyNotIn() {
+    return taskDefinitionKeyNotIn;
   }
 
   public String getKeyLike() {
@@ -1769,6 +1814,10 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
 
   public String[] getTaskDefinitionKeys() {
     return taskDefinitionKeys;
+  }
+
+  public String[] getTaskDefinitionKeyNotIn() {
+    return taskDefinitionKeyNotIn;
   }
 
   public boolean getIsTenantIdSet() {
@@ -1912,6 +1961,13 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
     }
     else if (this.getCandidateGroup() != null) {
       extendedQuery.taskCandidateGroup(this.getCandidateGroup());
+    }
+
+    if (extendingQuery.getCandidateGroupLike() != null) {
+      extendedQuery.taskCandidateGroupLike(extendingQuery.getCandidateGroupLike());
+    }
+    else if (this.getCandidateGroupLike() != null) {
+      extendedQuery.taskCandidateGroupLike(this.getCandidateGroupLike());
     }
 
     if (extendingQuery.isWithCandidateGroups() || this.isWithCandidateGroups()) {
@@ -2059,6 +2115,13 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
     }
     else if (this.getKeys() != null) {
       extendedQuery.taskDefinitionKeyIn(this.getKeys());
+    }
+    
+    if (extendingQuery.getKeyNotIn() != null) {
+      extendedQuery.taskDefinitionKeyNotIn(extendingQuery.getKeyNotIn());
+    }
+    else if (this.getKeyNotIn() != null) {
+      extendedQuery.taskDefinitionKeyNotIn(this.getKeyNotIn());
     }
 
     if (extendingQuery.getParentTaskId() != null) {

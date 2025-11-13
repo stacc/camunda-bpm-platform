@@ -70,7 +70,7 @@
                          "sorting": [
                              {
                                 "sortBy":"createTime",
-                                "sortOrder":"ASC"
+                                "sortOrder":"asc"
                              }
                          ]
                        }
@@ -136,6 +136,9 @@
                                "value": "3456",
                                "valueInfo": {}
                              }
+                           },
+                           "extensionProperties": {
+                             "key": "value"
                            }
                          }
                        ]

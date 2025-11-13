@@ -20,7 +20,7 @@ import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureNotContainsEmpty
 import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureNotContainsNull;
 import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureNotEmpty;
 import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureNotNull;
-import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureNull;
+import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureEmpty;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,6 +55,7 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
 
   private static final long serialVersionUID = 1L;
   protected String processInstanceId;
+  protected String rootProcessInstanceId;
   protected String processDefinitionId;
   protected String processDefinitionName;
   protected String processDefinitionNameLike;
@@ -63,6 +64,7 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
   protected String businessKeyLike;
   protected boolean finished = false;
   protected boolean unfinished = false;
+  protected boolean withJobsRetrying = false;
   protected boolean withIncidents = false;
   protected boolean withRootIncidents = false;
   protected String incidentType;
@@ -87,11 +89,14 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
   protected String processDefinitionKey;
   protected String[] processDefinitionKeys;
   protected Set<String> processInstanceIds;
+  protected String[] processInstanceIdNotIn;
   protected String[] tenantIds;
   protected boolean isTenantIdSet;
   protected String[] executedActivityIds;
   protected String[] activeActivityIds;
-  protected String state;
+  protected String[] activityIds;
+  protected String[] incidentIds;
+  protected Set<String> state = new HashSet<>();
 
   protected String caseInstanceId;
 
@@ -115,6 +120,18 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
   public HistoricProcessInstanceQuery processInstanceIds(Set<String> processInstanceIds) {
     ensureNotEmpty("Set of process instance ids", processInstanceIds);
     this.processInstanceIds = processInstanceIds;
+    return this;
+  }
+
+  public HistoricProcessInstanceQuery processInstanceIdNotIn(String... processInstanceIdNotIn){
+    ensureNotNull("processInstanceIdNotIn", (Object[]) processInstanceIdNotIn);
+    this.processInstanceIdNotIn = processInstanceIdNotIn;
+    return this;
+  }
+
+  public HistoricProcessInstanceQuery rootProcessInstanceId(String rootProcessInstanceId) {
+    ensureNotNull("Root process instance id", rootProcessInstanceId);
+    this.rootProcessInstanceId = rootProcessInstanceId;
     return this;
   }
 
@@ -180,6 +197,12 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
     return this;
   }
 
+  public HistoricProcessInstanceQuery incidentIdIn(String... incidentIds) {
+    ensureNotNull("incidentIds", (Object[]) incidentIds);
+    this.incidentIds = incidentIds;
+    return this;
+  }
+
   public HistoricProcessInstanceQuery incidentType(String incidentType) {
     ensureNotNull("incident type", incidentType);
     this.incidentType = incidentType;
@@ -203,6 +226,12 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
     ensureNotNull("incidentMessageLike", incidentMessageLike);
     this.incidentMessageLike = incidentMessageLike;
 
+    return this;
+  }
+
+  @Override
+  public HistoricProcessInstanceQuery withJobsRetrying(){
+    this.withJobsRetrying = true;
     return this;
   }
 
@@ -302,7 +331,9 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
       || CompareUtil.areNotInAscendingOrder(startedAfter, startedBefore)
       || CompareUtil.areNotInAscendingOrder(finishedAfter, finishedBefore)
       || CompareUtil.elementIsContainedInList(processDefinitionKey, processKeyNotIn)
-      || CompareUtil.elementIsNotContainedInList(processInstanceId, processInstanceIds);
+      || CompareUtil.elementIsNotContainedInList(processInstanceId, processInstanceIds)
+      || CompareUtil.elementIsContainedInArray(processInstanceId, processInstanceIdNotIn)
+      || CompareUtil.elementsAreContainedInArray(processInstanceIds, processInstanceIdNotIn);
   }
 
 	public HistoricProcessInstanceQuery orderByProcessInstanceBusinessKey() {
@@ -471,6 +502,10 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
     return activeActivityIds;
   }
 
+  public String[] getActivityIds() {
+    return activityIds;
+  }
+
   public String getBusinessKey() {
     return businessKey;
   }
@@ -543,8 +578,16 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
     return processInstanceId;
   }
 
+  public String getRootProcessInstanceId() {
+    return rootProcessInstanceId;
+  }
+
   public Set<String> getProcessInstanceIds() {
     return processInstanceIds;
+  }
+
+  public String[] getProcessInstanceIdNotIn() {
+    return processInstanceIdNotIn;
   }
 
   public String getStartedBy() {
@@ -599,7 +642,7 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
     return incidentStatus;
   }
 
-  public String getState() {
+  public Set<String> getState() {
     return state;
   }
 
@@ -641,6 +684,10 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
 
   public boolean getIsTenantIdSet() {
     return isTenantIdSet;
+  }
+
+  public boolean isWithJobsRetrying(){
+    return withJobsRetrying;
   }
 
   public boolean isWithIncidents() {
@@ -730,6 +777,10 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
     return tenantIds;
   }
 
+  public String[] getIncidentIds() {
+    return incidentIds;
+  }
+
   @Override
   public HistoricProcessInstanceQuery executedActivityAfter(Date date) {
     this.executedActivityAfter = date;
@@ -771,37 +822,55 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
   }
 
   @Override
+  public HistoricProcessInstanceQuery activityIdIn(String... ids) {
+    ensureNotNull(BadUserRequestException.class, "activity ids", (Object[]) ids);
+    ensureNotContainsNull(BadUserRequestException.class, "activity ids", Arrays.asList(ids));
+    this.activityIds = ids;
+    return this;
+  }
+
+  @Override
   public HistoricProcessInstanceQuery active() {
-    ensureNull(BadUserRequestException.class, "Already querying for historic process instance with another state", state, state);
-    state = HistoricProcessInstance.STATE_ACTIVE;
+    if(!isOrQueryActive) {
+      ensureEmpty(BadUserRequestException.class, "Already querying for historic process instance with another state", state);
+    }
+    state.add(HistoricProcessInstance.STATE_ACTIVE);
     return this;
   }
 
   @Override
   public HistoricProcessInstanceQuery suspended() {
-    ensureNull(BadUserRequestException.class, "Already querying for historic process instance with another state", state, state);
-    state = HistoricProcessInstance.STATE_SUSPENDED;
+    if(!isOrQueryActive) {
+      ensureEmpty(BadUserRequestException.class, "Already querying for historic process instance with another state", state);
+    }
+    state.add(HistoricProcessInstance.STATE_SUSPENDED);
     return this;
   }
 
   @Override
   public HistoricProcessInstanceQuery completed() {
-    ensureNull(BadUserRequestException.class, "Already querying for historic process instance with another state", state, state);
-    state = HistoricProcessInstance.STATE_COMPLETED;
+    if(!isOrQueryActive) {
+      ensureEmpty(BadUserRequestException.class, "Already querying for historic process instance with another state", state);
+    }
+    state.add(HistoricProcessInstance.STATE_COMPLETED);
     return this;
   }
 
   @Override
   public HistoricProcessInstanceQuery externallyTerminated() {
-    ensureNull(BadUserRequestException.class, "Already querying for historic process instance with another state", state, state);
-    state = HistoricProcessInstance.STATE_EXTERNALLY_TERMINATED;
+    if(!isOrQueryActive) {
+      ensureEmpty(BadUserRequestException.class, "Already querying for historic process instance with another state", state);
+    }
+    state.add(HistoricProcessInstance.STATE_EXTERNALLY_TERMINATED);
     return this;
   }
 
   @Override
   public HistoricProcessInstanceQuery internallyTerminated() {
-    ensureNull(BadUserRequestException.class, "Already querying for historic process instance with another state", state, state);
-    state = HistoricProcessInstance.STATE_INTERNALLY_TERMINATED;
+    if(!isOrQueryActive) {
+      ensureEmpty(BadUserRequestException.class, "Already querying for historic process instance with another state", state);
+    }
+    state.add(HistoricProcessInstance.STATE_INTERNALLY_TERMINATED);
     return this;
   }
 

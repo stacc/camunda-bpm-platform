@@ -19,7 +19,6 @@ package org.camunda.bpm.run.qa;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.is;
 import java.io.IOException;
-import javax.ws.rs.core.Response.Status;
 
 import org.camunda.bpm.run.qa.util.SpringBootManagedContainer;
 import org.junit.AfterClass;
@@ -66,19 +65,9 @@ public class ProductionConfigurationIT {
 
     // then
     engineResponse.then()
-      .statusCode(Status.OK.getStatusCode())
+      .statusCode(200)
       .body("size()", is(1))
       .body("[0].name", is("production"));
-  }
-
-  @Test
-  public void shouldNotProvideSwaggerUIInProductionConfiguration() {
-    // when
-    Response engineResponse = when().get(container.getBaseUrl() + "/swaggerui");
-
-    // then
-    engineResponse.then()
-      .statusCode(Status.NOT_FOUND.getStatusCode());
   }
 
   @Test
