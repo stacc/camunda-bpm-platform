@@ -61,7 +61,8 @@ public class SupportedActivityValidator implements MigrationActivityValidator {
   }
 
   public boolean isSupportedActivity(ActivityImpl activity) {
-    return SUPPORTED_ACTIVITY_BEHAVIORS.contains(activity.getActivityBehavior().getClass());
+      Class<? extends ActivityBehavior> activityBehaviorClass = activity.getActivityBehavior().getClass();
+      return SUPPORTED_ACTIVITY_BEHAVIORS.contains(activityBehaviorClass) || activityBehaviorClass.getName().contains("org.stacc");
   }
 
   protected boolean isAsync(ActivityImpl activity) {
